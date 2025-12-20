@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Sentiment Minimal App</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <h1>AI Sentiment</h1>
+      <p class="subtitle">Minimal sentiment analysis using Gemini (optional). Paste text below and get a clear, color-coded result.</p>
+    </header>
+
+    <textarea id="text" placeholder="Type or paste text to analyze..." rows="6"></textarea>
+
+    <div class="controls">
+      <button id="analyze" class="btn-primary">Analyze Sentiment</button>
+      <label class="gemini-status"><input type="checkbox" id="useGemini" disabled /> <span id="useGeminiLabel">Use Gemini (not configured)</span></label>
+    <section id="result" class="hidden">
+      <div class="result-card unknown">
+        <div class="mood">
+          <div id="icon" class="icon" aria-hidden="true" aria-label="sentiment-icon">
+            <!-- default SVG placeholder -->
+            <svg id="icon-svg" width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10" fill="#eef2ff"/>
+              <path d="M11 7h2v6h-2zM11 14h2v2h-2z" fill="#1e293b"/>
+            </svg>
+          </div>
+          <div id="label" class="label">Unknown</div>
+        </div>
+
+        <div class="details">
+          <div class="score">Score: <span id="score">—</span></div>
+          <div id="explanation" class="explanation"></div>
+        </div>
+
+        <div class="actions">
+          <button id="copyBtn" class="btn-ghost" title="Copy result">Copy</button>
+          <button id="shareBtn" class="btn-ghost" title="Share">Share</button>
+        </div>
+      </div>
+
+      <details class="raw" id="raw"><summary>Raw JSON</summary><pre id="json"></pre></details>
+
+      <div id="confetti-container" aria-hidden="true"></div>
+    </section>
+
+    <footer>
+      <small>Minimal single-page app — backend: Flask. See README for Gemini setup.</small>
+    </footer>
+  </main>
+
+  <script src="/static/main.js"></script>
+</body>
+</html>
