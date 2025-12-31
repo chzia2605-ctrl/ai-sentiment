@@ -350,25 +350,20 @@
         </div>
     </div>
 
-    <!-- Transformers.js library for running models locally -->
     <script type="module">
         import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
         
-        // Disable local model files, use remote models
         env.allowLocalModels = false;
         
-        // Local sentiment analysis model (runs entirely in browser)
         let sentimentPipeline = null;
         let modelLoading = false;
 
-        // Load the sentiment analysis model
         window.loadModel = async function() {
             if (sentimentPipeline) {
-                return sentimentPipeline; // Model already loaded
+                return sentimentPipeline;
             }
             
             if (modelLoading) {
-                // Wait for ongoing load to complete
                 while (modelLoading) {
                     await new Promise(resolve => setTimeout(resolve, 100));
                 }
@@ -377,9 +372,6 @@
             
             modelLoading = true;
             try {
-                // Using a 3-class sentiment analysis model (positive/neutral/negative) that runs in browser
-                // This model will be downloaded and cached on first use
-                // Using cardiffnlp model which properly supports neutral sentiment classification
                 sentimentPipeline = await pipeline('sentiment-analysis', 'Xenova/twitter-roberta-base-sentiment-latest');
                 modelLoading = false;
                 return sentimentPipeline;
@@ -389,7 +381,6 @@
             }
         };
         
-        // Make pipeline accessible globally
         window.getPipeline = function() {
             return sentimentPipeline;
         };
@@ -411,22 +402,15 @@
             document.getElementById('errorMessage').classList.remove('active');
         }
 
-        // Function to analyze text and provide reasons for sentiment
         function generateExplanation(text, sentiment, confidence, posScore, negScore) {
             const lowerText = text.toLowerCase();
-            const words = text.split(/\s+/);
             
-            // Common sentiment indicators
             const positiveWords = ['love', 'excellent', 'amazing', 'great', 'good', 'wonderful', 'fantastic', 'awesome', 'perfect', 'brilliant', 'outstanding', 'superb', 'delighted', 'pleased', 'happy', 'joyful', 'thrilled', 'satisfied', 'impressed', 'beautiful', 'best', 'better', 'improved', 'recommend', 'thanks', 'thank you'];
             const negativeWords = ['hate', 'terrible', 'awful', 'bad', 'horrible', 'worst', 'disappointed', 'disgusting', 'pathetic', 'useless', 'frustrated', 'angry', 'upset', 'annoyed', 'failed', 'failure', 'wrong', 'poor', 'weak', 'unhappy', 'sad', 'disgusted', 'shocked'];
-            const intensifiers = ['very', 'extremely', 'absolutely', 'incredibly', 'really', 'so', 'too', 'quite', 'rather', 'particularly'];
-            const negationWords = ['not', 'no', 'never', "don't", "doesn't", "didn't", "won't", "can't", "couldn't", "isn't", "aren't", "wasn't", "weren't"];
             
-            let reasons = [];
             let detectedPositive = [];
             let detectedNegative = [];
             
-            // Detect positive indicators
             positiveWords.forEach(word => {
                 const regex = new RegExp(`\\b${word}\\b`, 'gi');
                 if (regex.test(text)) {
@@ -441,7 +425,6 @@
                 }
             });
             
-            // Detect negative indicators
             negativeWords.forEach(word => {
                 const regex = new RegExp(`\\b${word}\\b`, 'gi');
                 if (regex.test(text)) {
@@ -456,11 +439,8 @@
                 }
             });
             
-            // Check for exclamation marks and question marks
             const exclamationCount = (text.match(/!/g) || []).length;
-            const questionCount = (text.match(/\?/g) || []).length;
             
-            // Build explanation based on sentiment
             if (sentiment === 'positive') {
                 let explanation = `This text is classified as POSITIVE with ${(confidence * 100).toFixed(1)}% confidence. `;
                 
@@ -508,7 +488,6 @@
                 return explanation;
                 
             } else {
-                // Neutral sentiment
                 let explanation = `This text is classified as NEUTRAL with ${(confidence * 100).toFixed(1)}% confidence. `;
                 
                 if (detectedPositive.length === 0 && detectedNegative.length === 0) {
@@ -533,32 +512,25 @@
             const resultSection = document.getElementById('resultSection');
             const errorMessage = document.getElementById('errorMessage');
 
-            // Clear previous results
             errorMessage.classList.remove('active');
             resultSection.classList.remove('active');
 
-            // Validation
             if (!text) {
                 showError('Please enter some text to analyze');
                 return;
             }
 
-            // Show loader
             analyzeBtn.disabled = true;
             loader.classList.add('active');
 
             try {
-                // Load model if not already loaded (will download on first use)
                 let pipeline = window.getPipeline();
                 if (!pipeline) {
                     pipeline = await window.loadModel();
                 }
                 
-                // Run sentiment analysis using local model
                 const result = await pipeline(text);
                 
-                // Process results - model returns array with 3 classes: POSITIVE, NEUTRAL, NEGATIVE
-                // Handle different label formats: LABEL_0/LABEL_1/LABEL_2 or POSITIVE/NEUTRAL/NEGATIVE
                 const positiveLabel = result.find(r => 
                     r.label === 'POSITIVE' || 
                     r.label === 'LABEL_2' ||
@@ -575,34 +547,27 @@
                     r.label?.toUpperCase().includes('NEUTRAL')
                 );
                 
-                // Determine sentiment and confidence
                 let sentiment = 'neutral';
                 let confidence = 0.5;
-                let explanation = '';
                 
-                // Get scores
                 const posScore = positiveLabel?.score || 0;
                 const negScore = negativeLabel?.score || 0;
                 const neuScore = neutralLabel?.score || 0;
                 
-                // Find the label with the highest score (3-class classification)
                 const allLabels = [
                     { label: 'positive', score: posScore },
                     { label: 'negative', score: negScore },
                     { label: 'neutral', score: neuScore }
                 ];
                 
-                // Sort by score to find the highest
                 allLabels.sort((a, b) => b.score - a.score);
                 const topLabel = allLabels[0];
                 
                 sentiment = topLabel.label;
                 confidence = topLabel.score;
                 
-                // Generate detailed explanation with reasons
                 explanation = generateExplanation(text, sentiment, confidence, posScore, negScore);
 
-                // Create analysis object
                 const analysis = {
                     sentiment: sentiment,
                     confidence: confidence,
@@ -615,7 +580,6 @@
                 console.error('Error:', error);
                 let errorMessage = error.message || 'An error occurred while analyzing sentiment.';
                 
-                // Handle specific errors
                 if (error.message && error.message.includes('Failed to fetch')) {
                     errorMessage = 'Failed to download the model. Please check your internet connection. The model needs to be downloaded once on first use.';
                 } else if (error.message && error.message.includes('network')) {
@@ -630,15 +594,6 @@
             }
         }
 
-        function extractSentimentFromText(text) {
-            const lowerText = text.toLowerCase();
-            if (lowerText.includes('positive')) return 'positive';
-            if (lowerText.includes('negative')) return 'negative';
-            if (lowerText.includes('neutral')) return 'neutral';
-            if (lowerText.includes('mixed')) return 'mixed';
-            return 'neutral';
-        }
-
         function displayResult(analysis) {
             const resultSection = document.getElementById('resultSection');
             const sentimentBadge = document.getElementById('sentimentBadge');
@@ -646,22 +601,18 @@
             const confidenceFill = document.getElementById('confidenceFill');
             const confidenceText = document.getElementById('confidenceText');
 
-            // Set sentiment badge
             const sentiment = analysis.sentiment || 'neutral';
             const badgeClass = `sentiment-${sentiment}`;
             sentimentBadge.className = `sentiment-badge ${badgeClass}`;
             sentimentBadge.textContent = `Sentiment: ${sentiment}`;
 
-            // Set analysis text
             analysisText.textContent = analysis.explanation || 'Analysis complete.';
 
-            // Set confidence
             const confidence = analysis.confidence || 0.85;
             const confidencePercent = Math.round(confidence * 100);
             confidenceFill.style.width = `${confidencePercent}%`;
             confidenceText.textContent = `Confidence: ${confidencePercent}%`;
 
-            // Show result
             resultSection.classList.add('active');
         }
 
@@ -671,7 +622,6 @@
             errorMessage.classList.add('active');
         }
 
-        // Allow Enter key to trigger analysis (Ctrl+Enter or Cmd+Enter)
         document.getElementById('textInput').addEventListener('keydown', function(e) {
             if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                 analyzeSentiment();
