@@ -1,0 +1,9 @@
+Flask>=2.0
+# Optional: Install the Vertex AI SDK if you want to use Gemini
+vertexai>=0.3.0
+google-cloud-aiplatform>=1.34.0
+
+# Optional: add requests to call Gemini via API key
+requests>=2.0
+
+# (Optional) pin versions as needed
